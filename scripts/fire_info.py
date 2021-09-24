@@ -8,37 +8,41 @@
 #    }
 
 fire_dict = {
-    "tamarack":{
-        "region" : [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210729_Tamarack_KMZ_perimeter_only"],
+    "tamarack": {
+        "region": [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210729_Tamarack_KMZ_perimeter_only"],
+        "region_date": ["2021-07-29"],
         "start": ["2021-07-04"],
         "end": [None],
         "pre_start": '2020-06-01',
         "pre_end": '2020-09-01',
-        },
-    "dixie":{
-        "region" : [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210810_Dixie_KMZ_perimeter_only"],
+    },
+    "dixie": {
+        "region": [r"projects/sig-misc-ee/assets/fire_response_2021/20210923_Dixie", r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210810_Dixie_KMZ_perimeter_only"],
+        "region_date": ["2021-09-23", "2021-08-10"],
         "start": ["2021-07-14"],
         "end": [None],
         "pre_start": '2020-06-01',
         "pre_end": '2020-09-01',
-        },
-    "beckwourth":{
-        "region" : [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210722_Beckwourth_IR_perimeter_only"],
+    },
+    "beckwourth": {
+        "region": [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210722_Beckwourth_IR_perimeter_only"],
+        "region_date": ['2021-07-22'],
         "start": ["2021-07-04"],
         "end": [None],
         "pre_start": '2020-06-01',
         "pre_end": '2020-09-01',
-        },
-    
-   }    
+    },
 
-def get_fire_by_name(fire_name:str,current_date : str = None)->tuple:
+}
+
+
+def get_fire_by_name(fire_name: str, current_date: str = None) -> tuple:
     fire_name = fire_name.lower()
     if current_date is None:
         fire_end = fire_dict[fire_name]["end"][0]
-    elif isinstance(current_date,str):
+    elif isinstance(current_date, str):
         fire_end = current_date
-    
+
     fire_start = fire_dict[fire_name]["start"][0]
     region = fire_dict[fire_name]["region"][0]
     pre_end = fire_dict[fire_name]["pre_end"]
