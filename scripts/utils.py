@@ -43,3 +43,30 @@ def exportMapToCloud(img, desc, region, **kwargs):
 
     task_ordered.start()
     print("task started :",desc)
+
+
+
+def exportImgtoAsset(img, desc, export:bool=False):
+    '''Exports img using crs, crs_transform, and dimensions of LANDFIRE conus-wide raster template'''
+    
+    asset_path = 'projects/pyregence-ee/assets/conus/nifc/'
+    
+    
+    if export == True:
+        task = ee.batch.Export.image.toAsset(
+        image = img,
+        description=desc,
+        assetId= asset_path+desc,
+        pyramidingPolicy={'SEVERITY':'mode'},
+        dimensions= [154208, 97283],                               
+        crs= 'EPSG:5070',
+        crs_transform= [30, 0, -2362425.000000002, 0, -30, 3177435.000000003],
+        maxPixels= 1e12
+        )
+        
+        task.start()
+        print('export task started')
+    
+    else:
+        print(f'would export to {asset_path}{desc}')
+        print('set export = True to when ready')
