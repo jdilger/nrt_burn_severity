@@ -111,7 +111,8 @@ def make_pre_composite(col : ee.ImageCollection, start_date : str, end_date:str)
 
 def get_composite(col : ee.ImageCollection, func, *args : str )-> ee.Image:
     col = add_date_band(col, args[0])
-    print(*args)
+    # when using in the fc burn severity notebook the *args are server-side compute objects not strings like in other notebook, so just commented out printing
+    #print(*args)
     composite = func(col,*args)
     return composite
 
