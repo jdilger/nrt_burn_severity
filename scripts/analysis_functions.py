@@ -5,7 +5,7 @@ def nbr(image:ee.Image)-> ee.Image:
     return image.normalizedDifference(['nir','swir2']).multiply(1000)
 
 def dnbr(pre:ee.Image, post : ee.Image)-> ee.Image:
-    return pre.subtract(post)
+    return pre.subtract(post).rename('dNBR')
 
 def rdnbr(pre:ee.Image, nrt : ee.Image)-> ee.Image:
     pre_nbr = nbr(pre)
