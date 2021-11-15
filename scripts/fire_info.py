@@ -71,5 +71,7 @@ def get_fire_info_from_feature(feat: ee.Feature) -> tuple:
     post_end = ee.Feature(feat).getString('end')
     pre_start = ee.Feature(feat).getString('pre_start')
     pre_end = ee.Feature(feat).getString('pre_end')
+    pre_scene_id_slice = ee.Feature(feat).getString('Pre_ID').slice(0,1)
+    post_scene_id_slice = ee.Feature(feat).getString('Post_ID').slice(0,1)
 
-    return (region, post_start, post_end, pre_start, pre_end)
+    return (region, post_start, post_end, pre_start, pre_end, pre_scene_id_slice, post_scene_id_slice)
