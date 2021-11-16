@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from ws_to_gdf import to_gdf, parse_crs_extent
 
 
-# arguments for function
+# if were to make this script a callable function - arguments for function
 year_choice = str(2020)
 acre_min = 500
 
@@ -79,6 +79,7 @@ gdf_yr = gdf_yr[gdf_yr.AcresAutoCalc >= acre_min]
 #make two copies
 gdf_yrv1 = gdf_yr.copy(deep=True)
 gdf_yrv2 = gdf_yr.copy(deep=True) 
+gdf_yrv3 = gdf_yr.copy(deep=True)
 #%%
 ####################### OPTION 1 ################################
 # pre-img filter = 1 yr prior 3mo window straddling Discovery date
@@ -87,38 +88,39 @@ gdf_yrv2 = gdf_yr.copy(deep=True)
 #   pre-img window would be 2019-07-17 to 2019-09-17
 #   post_img window would be 2021-07-17 to 2021-09-17
 
-gdf_yrv1.loc[:,'start'] = gdf_yrv1['Discovery'] + timedelta(days= 335)      # 1yr later, 1 mo before
-gdf_yrv1.loc[:,'end'] = gdf_yrv1['Discovery'] + timedelta(days = 395)       # 1yr later, 1 mo after
-gdf_yrv1.loc[:,'pre_start'] = gdf_yrv1['Discovery'] - timedelta(days=395)   # 1yr earlier, 1 mo before
-gdf_yrv1.loc[:,'pre_end'] = gdf_yrv1['Discovery'] - timedelta(days=335)     # 1yr earlier, 1 mo after
+gdf_yrv1.loc[:,'start'] = gdf_yrv1['Discovery'] + timedelta(days= 335)      # 1yr later, 30 days before
+gdf_yrv1.loc[:,'end'] = gdf_yrv1['Discovery'] + timedelta(days = 395)       # 1yr later, 30 days after
+gdf_yrv1.loc[:,'pre_start'] = gdf_yrv1['Discovery'] - timedelta(days=395)   # 1yr earlier, 30 days before
+gdf_yrv1.loc[:,'pre_end'] = gdf_yrv1['Discovery'] - timedelta(days=335)     # 1yr earlier, 30 days after
 
 # to ensure all fires get same assessment, need to remove fires whose post-fire image composite would 
 # require imagery that theoretically wouldn't be available yet. 
 # there appears to be a 7-8 day lag from date of collection to Earth Engine ingestion for 
 # the default Landsat collection that John's nrt tool uses ('LANDSAT/LC08/C01/T1_TOA')
 
-# So make post fire img composite right bound be 10 days before today's date to be safe
-post_end_cut_off = pd.to_datetime(datetime.now()) - timedelta(days=10)
+# So make post fire img composite right bound be certain # days before today's date to be safe
+post_end_cut_off = pd.to_datetime(datetime.now()) - timedelta(days=5)
 # exclude fire records whose 'end' value is beyond the cutoff
 before_cutoff = len(gdf_yrv1)
 gdf_yrv1 = gdf_yrv1[gdf_yrv1.end <= post_end_cut_off]
 after_cutoff = len(gdf_yrv1)
 print(f'removing {before_cutoff - after_cutoff} fires requiring future non-existent imagery')
 # convert datetime to string dtype
-gdf_yrv1.loc[:,['start', 'end', 'pre_start', 'pre_end']] = gdf_yrv1[['start', 'end', 'pre_start', 'pre_end']].astype('str')
-
+gdf_yrv1.loc[:,['Discovery','start', 'end', 'pre_start', 'pre_end']] = gdf_yrv1[['Discovery','start', 'end', 'pre_start', 'pre_end']].astype('str')
 # convert to yyyy-mm-dd format
 gdf_yrv1.loc[:, 'start'] = [x.split(' ')[0] for x in gdf_yrv1['start']]
 gdf_yrv1.loc[:, 'end'] = [x.split(' ')[0] for x in gdf_yrv1['end']]
 gdf_yrv1.loc[:, 'pre_start'] = [x.split(' ')[0] for x in gdf_yrv1['pre_start']]
 gdf_yrv1.loc[:, 'pre_end'] = [x.split(' ')[0] for x in gdf_yrv1['pre_end']]
+gdf_yrv1.loc[:, 'Discovery'] = [x.split(' ')[0] for x in gdf_yrv1['Discovery']]
 
 #subset columns
-gdf_finalv1 = gdf_yrv1[['OBJECTID', 'Name', 'AcresAutoCalc', 'start', 'end', 'pre_start', 'pre_end', 'geometry']]
+gdf_finalv1 = gdf_yrv1[['OBJECTID', 'Name', 'AcresAutoCalc', 'Discovery','start', 'end', 'pre_start', 'pre_end', 'geometry']]
 # write to shp
 file_name = f'nifc_fires_{year_choice}_gte500acres_v1.shp'
 out_file = f'{os.path.join(out_path,file_name)}'
-gdf_finalv1.to_file(out_file)
+print(f'writing out to {out_file}')
+#gdf_finalv1.to_file(out_file)
 # %%
 ####################### OPTION 2 ################################
 # copying Miller (2007) as much as possible, pre-fire img is as close to the fire alarm date on that same year
@@ -140,8 +142,8 @@ gdf_yrv2.loc[:,'pre_end'] = gdf_yrv2['Discovery'] - timedelta(days=1)     # same
 # there appears to be a 7-8 day lag from date of collection to Earth Engine ingestion for 
 # the default Landsat collection that John's nrt tool uses ('LANDSAT/LC08/C01/T1_TOA')
 
-# So make post fire img composite right bound be 10 days before today's date to be safe
-post_end_cut_off = pd.to_datetime(datetime.now()) - timedelta(days=10)
+# So make post fire img composite right bound be certain # days before today's date to be safe
+post_end_cut_off = pd.to_datetime(datetime.now()) - timedelta(days=5)
 # exclude fire records whose 'end' value is beyond the cutoff
 before_cutoff = len(gdf_yrv2)
 gdf_yrv2 = gdf_yrv2[gdf_yrv2.end <= post_end_cut_off]
@@ -149,18 +151,60 @@ after_cutoff = len(gdf_yrv2)
 print(f'removing {before_cutoff - after_cutoff} fires requiring future non-existent imagery')
 
 # convert datetime to string dtype
-gdf_yrv2.loc[:,['start', 'end', 'pre_start', 'pre_end']] = gdf_yrv2[['start', 'end', 'pre_start', 'pre_end']].astype('str')
+gdf_yrv2.loc[:,['Discovery','start', 'end', 'pre_start', 'pre_end']] = gdf_yrv2[['Discovery','start', 'end', 'pre_start', 'pre_end']].astype('str')
 
 # convert to yyyy-mm-dd format
 gdf_yrv2.loc[:, 'start'] = [x.split(' ')[0] for x in gdf_yrv2['start']]
 gdf_yrv2.loc[:, 'end'] = [x.split(' ')[0] for x in gdf_yrv2['end']]
 gdf_yrv2.loc[:, 'pre_start'] = [x.split(' ')[0] for x in gdf_yrv2['pre_start']]
 gdf_yrv2.loc[:, 'pre_end'] = [x.split(' ')[0] for x in gdf_yrv2['pre_end']]
-
+gdf_yrv2.loc[:, 'Discovery'] = [x.split(' ')[0] for x in gdf_yrv2['Discovery']]
 #subset columns
-gdf_finalv2 = gdf_yrv2[['OBJECTID', 'Name', 'AcresAutoCalc', 'start', 'end', 'pre_start', 'pre_end', 'geometry']]
+gdf_finalv2 = gdf_yrv2[['OBJECTID', 'Name', 'AcresAutoCalc', 'Discovery','start', 'end', 'pre_start', 'pre_end', 'geometry']]
 
 file_name = f'nifc_fires_{year_choice}_gte500acres_v2.shp'
 out_file = f'{os.path.join(out_path,file_name)}'
-gdf_finalv2.to_file(out_file)
+print(f'writing out to {out_file}')
+#gdf_finalv2.to_file(out_file)
+# %%
+####################### OPTION 3 ################################
+# pre-img filter = 1 yr prior 3mo window leading up to Discovery date
+# post-img filter = 1 yr later, 3mo window leading up to Discovery date
+#   ex: fire Discovery date is 2020-08-17,
+#   pre-img window would be 2019-05-17 to 2019-08-17
+#   post_img window would be 2021-05-17 to 2021-08-17
+
+gdf_yrv3.loc[:,'start'] = gdf_yrv3['Discovery'] + timedelta(days= 275)      # 1yr later and 90 days before
+gdf_yrv3.loc[:,'end'] = gdf_yrv3['Discovery'] + timedelta(days = 365)       # 1yr later
+gdf_yrv3.loc[:,'pre_start'] = gdf_yrv3['Discovery'] - timedelta(days=455)   # 1yr earlier and 90 days before
+gdf_yrv3.loc[:,'pre_end'] = gdf_yrv3['Discovery'] - timedelta(days=365)     # 1yr earlier
+
+# to ensure all fires get same assessment, need to remove fires whose post-fire image composite would 
+# require imagery that theoretically wouldn't be available yet. 
+# there appears to be a 7-8 day lag from date of collection to Earth Engine ingestion for 
+# the default Landsat collection that John's nrt tool uses ('LANDSAT/LC08/C01/T1_TOA')
+
+# So make post fire img composite right bound be certain # days before today's date to be safe
+post_end_cut_off = pd.to_datetime(datetime.now()) - timedelta(days=5)
+# exclude fire records whose 'end' value is beyond the cutoff
+before_cutoff = len(gdf_yrv3)
+gdf_yrv3 = gdf_yrv3[gdf_yrv3.end <= post_end_cut_off]
+after_cutoff = len(gdf_yrv3)
+print(f'removing {before_cutoff - after_cutoff} fires requiring future non-existent imagery')
+# convert datetime to string dtype
+gdf_yrv3.loc[:,['Discovery','start', 'end', 'pre_start', 'pre_end']] = gdf_yrv3[['Discovery','start', 'end', 'pre_start', 'pre_end']].astype('str')
+
+# convert to yyyy-mm-dd format
+gdf_yrv3.loc[:, 'start'] = [x.split(' ')[0] for x in gdf_yrv3['start']]
+gdf_yrv3.loc[:, 'end'] = [x.split(' ')[0] for x in gdf_yrv3['end']]
+gdf_yrv3.loc[:, 'pre_start'] = [x.split(' ')[0] for x in gdf_yrv3['pre_start']]
+gdf_yrv3.loc[:, 'pre_end'] = [x.split(' ')[0] for x in gdf_yrv3['pre_end']]
+gdf_yrv3.loc[:, 'Discovery'] = [x.split(' ')[0] for x in gdf_yrv3['Discovery']]
+#subset columns
+gdf_finalv3 = gdf_yrv3[['OBJECTID', 'Name', 'AcresAutoCalc', 'Discovery','start', 'end', 'pre_start', 'pre_end', 'geometry']]
+# write to shp
+file_name = f'nifc_fires_{year_choice}_gte500acres_v3.shp'
+out_file = f'{os.path.join(out_path,file_name)}'
+print(f'writing out to {out_file}')
+#gdf_finalv3.to_file(out_file)
 # %%
