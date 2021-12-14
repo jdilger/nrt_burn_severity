@@ -12,7 +12,6 @@ acre_min = 500
 
 # web service url of NIFC fires
 url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Fire_History_Perimeters_Public/FeatureServer/0'
-# url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Fire_History_Locations_Public/FeatureServer/0'
 extent, spatialref = parse_crs_extent(url)
 
 today_string = str(datetime.now()).split(' ')[0].replace('-', '_')
