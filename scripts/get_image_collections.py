@@ -116,6 +116,15 @@ def get_composite(col : ee.ImageCollection, func, *args : str )-> ee.Image:
     composite = func(col,*args)
     return composite
 
+def remove_recent(featColl: ee.FeatureCollection):
+    # remove fires from featureCollection whose Discovery date was within last xx days
+    # failsafe against runtime error due to post_collection returning no images
+    date_threshold = ee.Date.parse("Y-M-d", datetime.utcnow().strftime("%Y-%m-%d")).advance(-30, 'day')
+    fires_w_date = ee.FeatureCollection(featColl).map(lambda feature: ee.Feature(feature).set('Discovery_Date', ee.Date(feature.getString('Discovery')) ) )
+    
+    fires_filtered = fires_w_date.filter(ee.Filter.lt('Discovery_Date' , date_threshold))
+    return fires_filtered
+
 if __name__ == '__main__':
 
     py_date = datetime.utcnow()
