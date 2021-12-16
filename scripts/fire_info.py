@@ -1,6 +1,6 @@
 #%%
 import ee
-ee.Initialize()
+from datetime import datetime, timedelta
 # structure:
 # { "fireName":{
 #     "start":str date
@@ -75,57 +75,41 @@ def get_fire_info_from_feature(feat: ee.Feature) -> tuple:
     pre_end = ee.Feature(feat).getString('pre_end')
 
     return (region, post_start, post_end, pre_start, pre_end)
-#%%
-from datetime import datetime, timedelta
-# new function that defines for itself the start and end date pairs depending on the set of fires its given
-fires = ee.FeatureCollection("projects/pyregence-ee/assets/conus/nifc/nifc_fires_2020_gte500acres_v3")
-newest_fire = datetime.fromisoformat(fires.sort('Discovery', False).first().getString('Discovery').getInfo())
-print('most recent fire date in collection', newest_fire)
-# if current date is more than 1 year more than most recent of discovery dates in the fire feature collection, use 
-# historical mode
-feature = fires.first()
 
-current_date = datetime.utcnow()
-difference = current_date - newest_fire
 
-print(feature.getString('Discovery').getInfo())
-
-if difference < timedelta(days=365):
-    print('use realtime mode')
+def config_mode(featColl: ee.FeatureCollection):
+    # historical mode or realtime mode depending on how recent the most recent fire in the collection is
+    fires = ee.FeatureCollection(featColl)
+    newest_fire = fires.sort('Discovery', False).first()
+    newest_fire_date = datetime.fromisoformat(newest_fire.getString('Discovery').getInfo())
     
-    pre_start = ee.Date(feature.getString('Discovery')).advance(-410, 'day') # 1 year prior, 45 days before fire discovery
-    pre_end = ee.Date(feature.getString('Discovery')).advance(-320, 'day')  # 1 year prior, 45 days after fire discovery
-    post_start = ee.Date(feature.getString('Discovery'))                    # actual fire discovery date
-    post_end = None                                                         # no end time constraint
+    current_date = datetime.utcnow()
+    difference = current_date - newest_fire_date
 
-    landsat_arg = None
-    cloud_arg = None
-else:
-    print('use historical mode')
-    
-    pre_start = ee.Date(feature.getString('Discovery')).advance(-455, 'day') # 1 year prior, 90 days before fire discovery
-    pre_end = ee.Date(feature.getString('Discovery')).advance(-365, 'day')  # 1 year prior
-    post_start = ee.Date(feature.getString('Discovery')).advance(275, 'day') # 1 year later, 90 days before fire discovery
-    post_end = ee.Date(feature.getString('Discovery')).advance(365, 'day') # 1 year later
+    if difference < timedelta(days=365):
+        mode = 'realtime'
+    else:
+        mode= 'historical'
 
-    landsat_arg = 'bestls'
-    cloud_arg= 'bust'
+    return mode
 
+def get_fire_info_from_feature_v2(feat: ee.Feature, run_mode):
+    # construct pre and post start and end dates depending on mode
+    feature = ee.Feature(feat)
+    region = feature.geometry()
 
-print(pre_start.format("Y-M-d").getInfo())
-print(pre_end.format("Y-M-d").getInfo())
-print(post_start.format("Y-M-d").getInfo())
-print(post_end.format("Y-M-d").getInfo())
+    if run_mode == 'realtime':
+        # realtime mode
+        pre_start = ee.String(ee.Date(feature.getString('Discovery')).advance(-365, 'day').format("Y-M-d")) # 1 year prior, same day of discovery
+        pre_end = ee.String(ee.Date(feature.getString('Discovery')).advance(-275, 'day').format("Y-M-d"))  # 1 year prior, 90 days after discovery
+        post_start = feature.getString('Discovery')  # actual fire discovery date
+        post_end = ee.String(ee.Date(feature.getString('Discovery')).advance(90, 'day').format("Y-M-d"))   # 90 days after discovery
+  
+    else:
+        # historical mode
+        pre_start = ee.String(ee.Date(feature.getString('Discovery')).advance(-455, 'day').format("Y-M-d")) # 1 year prior, 90 days before fire discovery
+        pre_end = ee.String(ee.Date(feature.getString('Discovery')).advance(-365, 'day').format("Y-M-d"))  # 1 year prior
+        post_start = ee.String(ee.Date(feature.getString('Discovery')).advance(275, 'day').format("Y-M-d")) # 1 year later, 90 days before fire discovery
+        post_end = ee.String(ee.Date(feature.getString('Discovery')).advance(365, 'day').format("Y-M-d")) # 1 year later
 
-print(landsat_arg)
-print(cloud_arg)
-#def define_dates(feat: ee.Feature):
-
-
-
-
-# print(feature.getString('Discovery').getInfo())
-# print(pre_start.getInfo())
-# print(pre_start.format("Y-M-d").getInfo())
-
-# %%
+    return region, pre_start, pre_end, post_start, post_end
