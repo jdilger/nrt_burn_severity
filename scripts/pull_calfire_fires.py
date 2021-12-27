@@ -114,9 +114,9 @@ def main():
     logger.info(f'writing out to {out_file}')
     gdf_final.to_file(out_file)
 
-    # cleanup, can't delete gdb probably because i'm reading from it in python
+    # cleanup
     os.remove(zip_file)
-    #os.remove(gdb)
+    shutil.rmtree(gdb)
 
 if __name__ == "__main__":
     main()
