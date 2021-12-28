@@ -63,43 +63,28 @@ def get_fire_by_name(fire_name: str, current_date: str = None) -> tuple:
 
     return (region, fire_start, fire_end, pre_start, pre_end)
 
-
-# won't need fire_name bc it's going to map through one feature at a time
-def get_fire_info_from_feature(feat: ee.Feature) -> tuple:
-    
-    region = ee.Feature(feat).geometry()
-
-    post_start = ee.Feature(feat).getString('start')
-    post_end = ee.Feature(feat).getString('end')
-    pre_start = ee.Feature(feat).getString('pre_start')
-    pre_end = ee.Feature(feat).getString('pre_end')
-
-    return (region, post_start, post_end, pre_start, pre_end)
-
-
-def config_mode(featColl: ee.FeatureCollection):
-    # historical mode or realtime mode depending on how recent the most recent fire in the collection is
-    fires = ee.FeatureCollection(featColl)
-    newest_fire = fires.sort('Discovery', False).first()
-    newest_fire_date = datetime.fromisoformat(newest_fire.getString('Discovery').getInfo())
+def config_mode(feat: ee.Feature):
+    '''returns 'historical' mode or 'recent' mode depending on how recent the fire is; for collections use most recent fire feature'''
+    fire = ee.Feature(feat)
+    fire_date = datetime.fromisoformat(fire.getString('Discovery').getInfo())
     
     current_date = datetime.utcnow()
-    difference = current_date - newest_fire_date
+    difference = current_date - fire_date
 
-    if difference < timedelta(days=365):
-        mode = 'realtime'
+    if difference < timedelta(days=276): 
+        mode = 'recent'
     else:
         mode= 'historical'
 
     return mode
 
-def get_fire_info_from_feature_v2(feat: ee.Feature, run_mode):
-    # construct pre and post start and end dates depending on mode
+def get_fire_info_from_feature(feat: ee.Feature, run_mode):
+    '''construct pre and post start and end dates depending on mode string determined by config_mode()'''
     feature = ee.Feature(feat)
     region = feature.geometry()
 
-    if run_mode == 'realtime':
-        # realtime mode
+    if run_mode == 'recent':
+        # recent mode
         pre_start = ee.String(ee.Date(feature.getString('Discovery')).advance(-365, 'day').format("Y-M-d")) # 1 year prior, same day of discovery
         pre_end = ee.String(ee.Date(feature.getString('Discovery')).advance(-275, 'day').format("Y-M-d"))  # 1 year prior, 90 days after discovery
         post_start = feature.getString('Discovery')  # actual fire discovery date
