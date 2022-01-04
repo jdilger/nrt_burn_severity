@@ -1,3 +1,6 @@
+#%%
+import ee
+from datetime import datetime, timedelta
 # structure:
 # { "fireName":{
 #     "start":str date
@@ -8,6 +11,16 @@
 #    }
 
 fire_dict = {
+    "hennessey": {
+        "region": [r"projects/pyregence-ee/assets/conus/nifc/hennessey_fire_2020"],
+        #"region_date": ["2021-07-29"], # seems to be unused
+        "start": ["2021-07-17"], # using discovery date or initial response date, 1 month before, a calendar year later
+        "end": ['2021-09-17'], # 1 month after, a calendar year later
+        "pre_start": '2019-07-17', # +1 month before start, one calendar yr back
+        "pre_end": '2019-09-17', # -1 month after start, one calendar year back
+    
+    
+    
     "tamarack": {
         "region": [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210729_Tamarack_KMZ_perimeter_only"],
         "region_date": ["2021-07-29"],
@@ -33,7 +46,7 @@ fire_dict = {
         "pre_end": '2020-09-01',
     },
 
-}
+}}
 
 
 def get_fire_by_name(fire_name: str, current_date: str = None) -> tuple:
@@ -49,3 +62,39 @@ def get_fire_by_name(fire_name: str, current_date: str = None) -> tuple:
     pre_start = fire_dict[fire_name]["pre_start"]
 
     return (region, fire_start, fire_end, pre_start, pre_end)
+
+def config_mode(feat: ee.Feature):
+    '''returns 'historical' mode or 'recent' mode depending on how recent the fire is; for collections use most recent fire feature'''
+    fire = ee.Feature(feat)
+    fire_date = datetime.fromisoformat(fire.getString('Discovery').getInfo())
+    
+    current_date = datetime.utcnow()
+    difference = current_date - fire_date
+
+    if difference < timedelta(days=276): 
+        mode = 'recent'
+    else:
+        mode= 'historical'
+
+    return mode
+
+def get_fire_info_from_feature(feat: ee.Feature, run_mode):
+    '''construct pre and post start and end dates depending on mode string determined by config_mode()'''
+    feature = ee.Feature(feat)
+    region = feature.geometry()
+
+    if run_mode == 'recent':
+        # recent mode
+        pre_start = ee.String(ee.Date(feature.getString('Discovery')).advance(-365, 'day').format("Y-M-d")) # 1 year prior, same day of discovery
+        pre_end = ee.String(ee.Date(feature.getString('Discovery')).advance(-275, 'day').format("Y-M-d"))  # 1 year prior, 90 days after discovery
+        post_start = feature.getString('Discovery')  # actual fire discovery date
+        post_end = ee.String(ee.Date(feature.getString('Discovery')).advance(90, 'day').format("Y-M-d"))   # 90 days after discovery
+  
+    else:
+        # historical mode
+        pre_start = ee.String(ee.Date(feature.getString('Discovery')).advance(-455, 'day').format("Y-M-d")) # 1 year prior, 90 days before fire discovery
+        pre_end = ee.String(ee.Date(feature.getString('Discovery')).advance(-365, 'day').format("Y-M-d"))  # 1 year prior
+        post_start = ee.String(ee.Date(feature.getString('Discovery')).advance(275, 'day').format("Y-M-d")) # 1 year later, 90 days before fire discovery
+        post_end = ee.String(ee.Date(feature.getString('Discovery')).advance(365, 'day').format("Y-M-d")) # 1 year later
+
+    return region, pre_start, pre_end, post_start, post_end
