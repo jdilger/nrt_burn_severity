@@ -74,7 +74,7 @@ def main():
     else:
         print(f'reading nifc fires from {out_shp}')
         gdf = gpd.read_file(out_shp)
-
+    
     # setup logging 
     # doing it down here bc somethign funky happening with the logger that one of ws_to_gdf module's packages uses
     # it outputs so much info about truncated field names and values that we don't need
@@ -88,8 +88,8 @@ def main():
     # set verbosity level to INFO if user runs with verbose flag
     logger.setLevel(logging.INFO)
 
-    logger.info(f'Year Filter: {args.year} | Acreage Minimum: {args.acres}')
-
+    logger.info(f'Year Filter: {year_choice} | Acreage Minimum: {acre_min}')
+    print('original length',len(gdf))
     # subset columns by index position..
     # had to look these up from the dataset since field names get changed upon read-in
     # OBJECTID 0
@@ -97,8 +97,10 @@ def main():
     # GIS Acres 4
     # Acres Auto-calculated 8
     # Fire Discovery Date Time 32
-    gdf = gdf.iloc[:,[0,1,4,8,32,105]]
-
+    # Global ID -5
+    # geometry -1
+    gdf = gdf.iloc[:,[0,1,4,8,32,-5,-1]]
+    # print(gdf.head(5))
     # in case you want these fields from nifc later they are here:
     # Containment Date Time 14
     # Fire Out Date Time 34
@@ -115,8 +117,11 @@ def main():
     # b/c datetime is computed as time since epoch since jan 1 1970
 
     # convert time since epoch to YYYY-mm-dd
-    gdf.loc[:,'Discovery'] = pd.to_datetime(gdf.loc[:,'Discovery'].apply(lambda d: datetime.fromtimestamp(int(d)/1000).strftime('%Y-%m-%d')) )
-
+    gdf.loc[:,'Discovery'] = pd.to_datetime(gdf.loc[:,'Discovery'].apply(lambda d: datetime.fromtimestamp(int(d)/1000).strftime('%Y-%m-%d')))#.astype('str') 
+    # gdf.loc[:,'Year'] = [int(s[0:4]) for s in gdf.loc[:,'Discovery']]
+    # gdf_yr = gdf.loc[gdf.Year == year_choice]
+    # print('converting discovery to date string\n',gdf.head())
+    # print('dtpyes now ',gdf.dtypes)
     start = pd.to_datetime(f'{year_choice}-01-01')
     end = pd.to_datetime(f'{year_choice}-12-31')
     gdf_yr = gdf[ (gdf.Discovery >= start) & (gdf.Discovery <= end ) ]
@@ -125,22 +130,32 @@ def main():
     # filter by acreage if provided
     if not acre_min == None:
         gdf_yr = gdf_yr[gdf_yr.Acres >= acre_min]
-
+    print('rows after year and acreage filters',len(gdf_yr))
+    
     # subset columns for final shapefile
-    gdf_final = gdf_yr[['OBJECTID', 'Name', 'Acres', 'Discovery','geometry']]
-
+    gdf_final = gdf_yr[['OBJECTID', 'Name', 'Acres', 'Discovery','GlobalID','geometry']]
     if gdf_final.shape[0] == 0:
         raise RuntimeError("Provided filters resulting in 0 records, try another set of filters")
     
-    logger.info(f'Saving shapefile with {gdf_final.shape[0]} records')
+    # clip to CONUS to remove AK and HI fires
+    conus=gpd.read_file(r'C:\FireFactor\T2Fuels\nrt_burn_severity\data\shp\tl_2021_us_state\tl_2021_us_state.shp')
+    conus=conus.to_crs(gdf_final.crs)
+    not_conus=['AK','HI']
+    conus = conus[~conus['STUSPS'].isin(not_conus)]
+    gdf_final_conus=gpd.clip(gdf_final,conus)
+    print('final conus records',len(gdf_final_conus))
+    print(gdf_final.sort_values(by='Acres').head(10))
+
+    
     # write to shp
+    logger.info(f'Saving shapefile with {gdf_final_conus.shape[0]} records')
     if not acre_min == None:
         file_name  = f'nifc_fires_{year_choice}_gte{acre_min}ac_{today_string}.shp'
     else:
         file_name = f'nifc_fires_{year_choice}_{today_string}.shp'
     out_file = f'{os.path.join(data_dir,file_name)}'
     logger.info(f'writing out to {out_file}')
-    gdf_final.to_file(out_file)
+    gdf_final_conus.to_file(out_file)
 
 if __name__ == "__main__":
     main()

@@ -26,7 +26,7 @@ def main():
     parser.add_argument(
         "-y",
         "--year",
-        type=int,
+        type=str,
         help="year of fires",
     )
 
@@ -51,7 +51,10 @@ def main():
     acre_min = args.acres
     
     data_dir = os.path.join(dir, 'data')
-    download_url = 'https://frap.fire.ca.gov/media/50dgwqrb/fire20_1.zip'
+    download_url = 'https://frap.fire.ca.gov/media/3ufh3ajg/fire21_1.zip' # path to file changed to fire21_1.zip for perims through 2021 (dumb)
+    gdb_basename = 'fire21_1.gdb'
+    layername = 'firep21_1'
+    
     today_string = datetime.utcnow().strftime("%Y-%m-%d").replace("-", "")
     
     logger.info(f'Year Filter: {args.year} | Acreage Minimum: {args.acres}')
@@ -66,16 +69,16 @@ def main():
     # self._setitem_single_column(ilocs[0], value, pi)
 
     # download zipfile and extract .gdb if haven't today
-    zip_file = os.path.join(data_dir,f'calfire_fires_zip_{today_string}.zip')
+    zip_file = os.path.join(data_dir,f'{os.path.basename(download_url)}')
     if not os.path.exists(zip_file):
         data = requests.get(download_url)
         with open(zip_file, 'wb')as file:
             file.write(data.content)
         shutil.unpack_archive(zip_file, data_dir, "zip")
 
-    gdb = os.path.join(data_dir, 'fire20_1.gdb')
-    gdf = gpd.read_file(gdb, layer='firep20_1')
-
+    gdb = os.path.join(data_dir, gdb_basename)
+    gdf = gpd.read_file(gdb, layer=layername)
+    print('upon read-in',gdf.shape)
     gdf = gdf.rename(columns = {
                                 'YEAR_':'Year',
                                 'STATE': 'State',
@@ -92,20 +95,24 @@ def main():
     gdf.loc[:,'Discovery'] = pd.to_datetime(gdf.loc[:,'Discovery'], errors='coerce').fillna(value='1970-01-01')
     gdf.loc[:,'Discovery'] = gdf.loc[:,'Discovery'].apply(lambda x: str(x)[0:10])
     gdf.loc[:,'Discovery'] = pd.to_datetime(gdf.loc[:,'Discovery'])
-
+    
     # filter by year choice
-    start = pd.to_datetime(f'{year_choice}-01-01')
-    end = pd.to_datetime(f'{year_choice}-12-31')
-    gdf_yr = gdf[ (gdf.loc[:,'Discovery'] >= start) & (gdf.loc[:,'Discovery'] <= end ) ]
-    gdf_yr.loc[:,'Discovery'] = gdf_yr.loc[:,'Discovery'].astype('str')
+    ## not sure why i was making yyyy-mm-dd date filter when i could just filter on Year
+    # start = pd.to_datetime(f'{year_choice}-01-01') 
+    # end = pd.to_datetime(f'{year_choice}-12-31')
+    # gdf_yr = gdf[ (gdf.loc[:,'Discovery'] >= start) & (gdf.loc[:,'Discovery'] <= end ) ]
+    # gdf_yr.loc[:,'Discovery'] = gdf_yr.loc[:,'Discovery'].astype('str')
+    gdf_yr = gdf[ gdf.loc[:,'Year'] == year_choice]
+    print(gdf_yr.shape,'gdf_yr after year filter')
     
     # filter by acreage if provided
     if not acre_min == None:
         gdf_yr = gdf_yr[gdf_yr['Acres'] >= acre_min]
+    
 
     #subset columns
     gdf_final = gdf_yr[['OBJECTID', 'Year', 'State', 'Agency', 'Unit_ID', 'Fire_Name', 'Incident','Acres', 'Discovery','geometry']]
-
+    print(gdf_final.shape, 'gdf final')
     logger.info(f'Saving shapefile with {gdf_final.shape[0]} records')
 
     # write to shp
