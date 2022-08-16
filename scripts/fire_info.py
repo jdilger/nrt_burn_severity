@@ -11,6 +11,15 @@ from datetime import datetime, timedelta
 #    }
 
 fire_dict = {
+    "czu": {
+        "region": [r"projects/pyregence-ee/assets/fires_bs_tool/czu_lightning_perim_20220815"],
+        #"region_date": ["2020-08-16"], # seems to be unused
+        "start": ["2021-05-16"], # using discovery date or initial response date, 1 month before, a calendar year later
+        "end": ['2021-08-16'], # 1 month after, a calendar year later
+        "pre_start": ['2019-05-16'], # +1 month before start, one calendar yr back
+        "pre_end": ['2019-08-16'], # -1 month after start, one calendar year back
+    },
+    
     "hennessey": {
         "region": [r"projects/pyregence-ee/assets/conus/nifc/hennessey_fire_2020"],
         #"region_date": ["2021-07-29"], # seems to be unused
@@ -18,7 +27,7 @@ fire_dict = {
         "end": ['2021-09-17'], # 1 month after, a calendar year later
         "pre_start": '2019-07-17', # +1 month before start, one calendar yr back
         "pre_end": '2019-09-17', # -1 month after start, one calendar year back
-    
+    },
     
     
     "tamarack": {
@@ -30,12 +39,12 @@ fire_dict = {
         "pre_end": '2020-09-01',
     },
     "dixie": {
-        "region": [r"projects/sig-misc-ee/assets/fire_response_2021/20210923_Dixie", r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210810_Dixie_KMZ_perimeter_only"],
-        "region_date": ["2021-09-23", "2021-08-10"],
-        "start": ["2021-07-14"],
-        "end": [None],
-        "pre_start": '2020-06-01',
-        "pre_end": '2020-09-01',
+        "region": [r"projects/pyregence-ee/assets/fires_bs_tool/dixie_perim_20220810",r"projects/sig-misc-ee/assets/fire_response_2021/20210923_Dixie", r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210810_Dixie_KMZ_perimeter_only"],
+        "region_date": ["2021-07-13","2021-09-23", "2021-08-10"],
+        "start": ["2022-04-17","2021-07-14"],
+        "end": ["2022-07-16",None],
+        "pre_start": ["2020-04-17",'2020-06-01'],
+        "pre_end": ["2020-07-16",'2020-09-01'],
     },
     "beckwourth": {
         "region": [r"projects/sig-misc-ee/assets/fire_response_2021/perimeters/20210722_Beckwourth_IR_perimeter_only"],
@@ -46,7 +55,7 @@ fire_dict = {
         "pre_end": '2020-09-01',
     },
 
-}}
+}
 
 
 def get_fire_by_name(fire_name: str, current_date: str = None) -> tuple:
@@ -58,8 +67,8 @@ def get_fire_by_name(fire_name: str, current_date: str = None) -> tuple:
 
     fire_start = fire_dict[fire_name]["start"][0]
     region = fire_dict[fire_name]["region"][0]
-    pre_end = fire_dict[fire_name]["pre_end"]
-    pre_start = fire_dict[fire_name]["pre_start"]
+    pre_end = fire_dict[fire_name]["pre_end"][0]
+    pre_start = fire_dict[fire_name]["pre_start"][0]
 
     return (region, fire_start, fire_end, pre_start, pre_end)
 
