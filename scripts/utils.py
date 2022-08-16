@@ -16,7 +16,7 @@ __defaults ={
 export_opts = {
                 'crs': {
                     'conus': 'EPSG:5070',
-                    'single_fire': None},
+                    'single_fire': 'EPSG:3857'},
                 
                 'crs_transform': {
                     'conus': [30, 0, -2362425.000000002, 0, -30, 3177435.000000003],
@@ -61,7 +61,7 @@ def exportMapToCloud(img, desc, region, **kwargs):
     print("task started :",desc)
 
 
-def exportImgtoAsset(img, desc, asset_folder, export_type, export:bool=False, **kwargs):
+def exportImgtoAsset(img, desc, region, asset_folder, export_type, export:bool=False, **kwargs):
     '''Exports img to asset using using export options dependent on export_type chosen ('conus' or 'single_fire')'''
     
     if export_type == 'conus':
@@ -104,7 +104,7 @@ def exportImgtoAsset(img, desc, asset_folder, export_type, export:bool=False, **
         print('set export = True to when ready')
         
 
-def exportImgtoDrive(img, desc, export_type, folder:str='BurnSeverity_outputs', export:bool=False, **kwargs):
+def exportImgtoDrive(img, desc, region, export_type, folder:str='BurnSeverity_outputs', export:bool=False, **kwargs):
     '''Exports img to Google Drive using export options dependent on export_type chosen ('conus' or 'single_fire')'''
     
     if export_type == 'conus':
@@ -124,7 +124,7 @@ def exportImgtoDrive(img, desc, export_type, folder:str='BurnSeverity_outputs', 
                                             )
 
     elif export_type == 'single_fire': 
-        region = img.geometry()
+        
         scale = kwargs.get('scale', __defaults[kwargs.get('default')]['exportScale'])
         
         task = ee.batch.Export.image.toDrive(image= img,
