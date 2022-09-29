@@ -111,7 +111,7 @@ def main():
         logger.info(f"gdf after Acreage filter\n{gdf.shape}")
 
     #subset columns
-    gdf_final = gdf[['Event_ID', 'irwinID', 'Incid_Name','Incid_Type','Map_ID', 'Map_Prog', 'Asmnt_Type','BurnBndAc', 'BurnBndLat','BurnBndLon','Discovery','geometry']]
+    gdf_final = gdf[['Event_ID', 'irwinID', 'Incid_Name','Incid_Type','Map_ID', 'Map_Prog', 'Asmnt_Type','BurnBndAc', 'BurnBndLat','BurnBndLon','Discovery','Year','geometry']]
 
     # write to shp
     logger.info(f"Saving shapefile with {gdf_final.shape[0]} records")
