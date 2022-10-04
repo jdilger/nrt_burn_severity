@@ -19,7 +19,7 @@ export_opts = {
                     'single_fire': 'EPSG:3857'},
                 
                 'crs_transform': {
-                    'conus': [30, 0, -2362425.000000002, 0, -30, 3177435.000000003],
+                    'conus': [30, 0, -2362425.0, 0, -30, 3177435],
                     'single_fire': None},
 
                 'dimensions': {
