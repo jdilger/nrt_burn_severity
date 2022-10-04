@@ -2,7 +2,7 @@ import ee
 import json
 
 def nbr(image:ee.Image)-> ee.Image:
-    return image.normalizedDifference(['nir','swir2']).multiply(1000)
+    return image.normalizedDifference(['NIR','SWIR2']).multiply(1000)
 
 def dnbr(pre:ee.Image, post : ee.Image)-> ee.Image:
     return pre.subtract(post)
