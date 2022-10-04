@@ -51,77 +51,35 @@ def get_image_collection(sensorTxt: str,
     lstoat2 = ee.ImageCollection("LANDSAT/LC08/C01/T2_TOA")
     lstoa = ee.ImageCollection("LANDSAT/LC08/C01/T1_TOA")
     # after Dec 31,2021 all Landsat 8 scenes are put into Collection 2 upon postprocessing
-    lstoat1_c2 = ee.ImageCollection("LANDSAT/LC08/C02/T1_RT_TOA") 
-    lstoat2_c2 = ee.ImageCollection("LANDSAT/LC08/C02/T2_TOA")
-    lstoa_c2 = ee.ImageCollection("LANDSAT/LC08/C02/T1_TOA")
-    start_date_dt = datetime.strptime(start_date,'%Y-%m-%d')
-    end_date_dt = datetime.strptime(end_date,'%Y-%m-%d')
-    c2_end_dt = datetime.strptime('2021-12-31','%Y-%m-%d')
+    # lstoat1_c2 = ee.ImageCollection("LANDSAT/LC08/C02/T1_RT_TOA") 
+    # lstoat2_c2 = ee.ImageCollection("LANDSAT/LC08/C02/T2_TOA")
+    # lstoa_c2 = ee.ImageCollection("LANDSAT/LC08/C02/T1_TOA")
+    # start_date_dt = datetime.strptime(start_date,'%Y-%m-%d')
+    # end_date_dt = datetime.strptime(end_date,'%Y-%m-%d')
+    # c2_end_dt = datetime.strptime('2021-12-31','%Y-%m-%d')
 
     if sensorTxt == 'sentinel2':
         sensor =  s2.filterBounds(region) \
                         .filterDate(start_date,end_date)
         if cloudBustingMethod == 'bust':
             sensor = sensor.map(mask_s2_clouds)
-        sensor = sensor.select(s2bandsin,s2bandsout) \
+            sensor = sensor.select(s2bandsin,s2bandsout) \
                             .map(scaleBands)
     if sensorTxt == 'landsat':
-        
-        if start_date_dt > c2_end_dt and end_date_dt > c2_end_dt: # collection 2 only
-            print('C2 only')
-            sensor = lstoat1_c2
-            if landsatCol == 't2':
-                sensor = sensor.merge(lstoat2_c2)
-            if landsatCol == 'bestls':
-                sensor = lstoa_c2
-            if cloudBustingMethod =='bust':
-                sensor = sensor.map(bustClouds)
-            sensor = sensor.filter(ee.Filter.neq('CLOUD_COVER', -1)).select(ls8bandsin_c2,ls8bandsout) \
-                .filterBounds(region) \
-                    .filterDate(start_date,end_date)
-        
-        elif start_date_dt < c2_end_dt and end_date_dt > c2_end_dt: # merge collection 1 and 2 imgs
-            print('C1 & C2 merge')
-            sensor1 = lstoat1
-            if landsatCol == 't2':
-                sensor1 = sensor.merge(lstoat2)
-            if landsatCol == 'bestls':
-                sensor1 = lstoa
-            if cloudBustingMethod =='bust':
-                sensor1 = sensor.map(bustClouds)
+        sensor = lstoat1
+    if landsatCol == 't2':
+        sensor = sensor.merge(lstoat2)
+    if landsatCol == 'bestls':
+        sensor = lstoa
+    if cloudBustingMethod =='bust':
+        sensor = sensor.map(bustClouds)
 
-            sensor1 = sensor1.filter(ee.Filter.neq('CLOUD_COVER', -1)).select(ls8bandsin,ls8bandsout) \
-                .filterBounds(region) \
-                    .filterDate(start_date,end_date)
-            
-            sensor2 = lstoat1_c2
-            if landsatCol == 't2':
-                sensor2 = sensor2.merge(lstoat2_c2)
-            if landsatCol == 'bestls':
-                sensor2 = lstoa_c2
-            if cloudBustingMethod =='bust':
-                sensor2 = sensor2.map(bustClouds)
-
-            sensor2 = sensor2.filter(ee.Filter.neq('CLOUD_COVER', -1)).select(ls8bandsin_c2,ls8bandsout) \
-                .filterBounds(region) \
-                    .filterDate(start_date,end_date)
-            sensor = sensor1.merge(sensor2)
-
-        else: # collection 1 only
-            print('C1 only')
-            sensor = lstoat1
-            if landsatCol == 't2':
-                sensor = sensor.merge(lstoat2)
-            if landsatCol == 'bestls':
-                sensor = lstoa
-            if cloudBustingMethod =='bust':
-                sensor = sensor.map(bustClouds)
-
-            sensor = sensor.filter(ee.Filter.neq('CLOUD_COVER', -1)).select(ls8bandsin,ls8bandsout) \
-                .filterBounds(region) \
-                    .filterDate(start_date,end_date)
+    sensor = sensor.filter(ee.Filter.neq('CLOUD_COVER', -1)).select(ls8bandsin,ls8bandsout) \
+        .filterBounds(region) \
+            .filterDate(start_date,end_date)
 
     return sensor
+
 def addDateBand(i: ee.Image)-> ee.Image:
     date = ee.Date(i.get('system:time_start'))
     yyyymmdd = date.format('YYYYMMdd')
