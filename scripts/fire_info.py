@@ -107,3 +107,61 @@ def get_fire_info_from_feature(feat: ee.Feature, run_mode):
         post_end = ee.String(ee.Date(feature.getString('Discovery')).advance(365, 'day').format("Y-M-d")) # 1 year later
 
     return region, pre_start, pre_end, post_start, post_end
+
+def set_dates_recent_mode(feat: ee.Feature):
+    '''construct pre and post start and end dates using historic fire mode'''
+    feature = ee.Feature(feat)
+    
+    pre_start = ee.Date(feature.getString('Discovery')).advance(-365, 'day') # 1 year prior, same day of discovery# 1 year prior, same day of discovery
+    pre_start_readable = ee.String(ee.Date(pre_start).format('YYYYMMdd')) 
+    
+    pre_end = ee.Date(feature.getString('Discovery')).advance(-275, 'day')  # 1 year prior, 90 days after discovery
+    pre_end_readable = ee.String(ee.Date(pre_end).format('YYYYMMdd')) # also wasn't cast as a string before - fixed
+
+    # post_start = ee.Date(ee.String(feature.getString('Discovery')).replace('-','','g'))  # actual fire discovery date
+    # post_start_readable = ee.String(feature.getString('Discovery')).replace('-','','g')
+    post_start = ee.Date(feature.getString('Discovery')).advance(1, 'day')  # actual fire discovery date ## do same Date.advance routine as others
+    post_start_readable = ee.String(ee.Date(post_start).format('YYYYMMdd'))
+
+    post_end = ee.Date(feature.getString('Discovery')).advance(90, 'day')   # 90 days after discovery
+    post_end_readable = ee.String(ee.Date(post_end).format('YYYYMMdd'))
+    
+    return feature.set('pre_start',pre_start,'pre_start_readable',pre_start_readable,
+                        'pre_end',pre_end, 'pre_end_readable', pre_end_readable,
+                        'post_start',post_start, 'post_start_readable', post_start_readable,
+                        'post_end',post_end, 'post_end_readable', post_end_readable)
+
+def set_dates_historic_mode(feat: ee.Feature):
+    '''construct pre and post start and end dates using recent fire mode'''
+    feature = ee.Feature(feat)
+    
+    pre_start = ee.Date(feature.getString('Discovery')).advance(-455, 'day') # 1 year prior, 90 days before fire discovery
+    pre_start_readable = ee.String(ee.Date(pre_start).advance(-455, 'day').format('YYYYMMdd')) # 1 year prior, 90 days before fire discovery
+
+    pre_end = ee.Date(feature.getString('Discovery')).advance(-365, 'day')  # 1 year prior
+    pre_end_readable = ee.String(ee.Date(pre_end).format('YYYYMMdd'))  # 1 year prior
+
+    post_start = ee.Date(feature.getString('Discovery')).advance(275, 'day') # 1 year later, 90 days before fire discovery
+    post_start_readable = ee.String(ee.Date(post_start).format('YYYYMMdd')) # 1 year later, 90 days before fire discovery
+
+    post_end = ee.Date(feature.getString('Discovery')).advance(365, 'day') # 1 year later
+    post_end_readable = ee.String(ee.Date(post_end).format('YYYYMMdd')) # 1 year later
+
+    return feature.set('pre_start',pre_start,'pre_start_readable',pre_start_readable,
+                        'pre_end',pre_end, 'pre_end_readable', pre_end_readable,
+                        'post_start',post_start, 'post_start_readable', post_start_readable,
+                        'post_end',post_end, 'post_end_readable', post_end_readable)
+
+def set_windows(feat: ee.Feature):
+    '''sets pre/post date windows in the feature's properties following ruleset based on recency of Fire Date'''
+    fire = ee.Feature(feat)
+    fire_date = ee.Date(fire.getString('Discovery'))
+    
+    current_date = ee.Date(datetime.now())
+    difference = current_date.difference(fire_date,'day')
+    # if fire date is more than a year ago we can use historical mode (1 yr pre 1 yr post) 
+    # otherwise we have to use recent mode
+    mode = ee.Algorithms.If(difference.gte(365),ee.String('historical'),ee.String('recent'))
+    fire = fire.set('mode',mode)
+    fire = ee.Algorithms.If(ee.String(mode).equals('recent'),set_dates_recent_mode(fire),set_dates_historic_mode(fire))
+    return fire
