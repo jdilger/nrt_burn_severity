@@ -331,8 +331,8 @@ def getLandsat(options):
         col = mergeLandsatCols(col, fcollection4, start, end, region, prepareL4L5)
         fcollection5 = ee.ImageCollection('LANDSAT/LT05/C02/T1_L2')
         col = mergeLandsatCols(col, fcollection5, start, end, region, prepareL4L5)
-        # fcollection7 = ee.ImageCollection('LANDSAT/LE07/C02/T1_L2')
-        # col = mergeLandsatCols(col, fcollection7, start, end, region, prepareL7)
+        fcollection7 = ee.ImageCollection('LANDSAT/LE07/C02/T1_L2')
+        col = mergeLandsatCols(col, fcollection7, start, end, region, prepareL7)
         fcollection8 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
         col = mergeLandsatCols(col, fcollection8, start, end, region, prepareL8L9)
         fcollection9 = ee.ImageCollection('LANDSAT/LC09/C02/T1_L2')
@@ -538,18 +538,18 @@ def prepareLsToa(image):
 
     return image.updateMask(mask)
 
-def getLandsatToa(startDate, endDate, geometry=None):
+def getLandsatToa(startDate, endDate, geometry=None): # exclude T2 due to quality requirements
     collectionIds = {
         'LANDSAT/LC09/C02/T1_TOA' : LANDSAT_BAND_DICT['L9'],
-        'LANDSAT/LC09/C02/T2_TOA' : LANDSAT_BAND_DICT['L9'],
+        # 'LANDSAT/LC09/C02/T2_TOA' : LANDSAT_BAND_DICT['L9'],
         'LANDSAT/LC08/C02/T1_TOA' : LANDSAT_BAND_DICT['L8'],
-        'LANDSAT/LC08/C02/T2_TOA' : LANDSAT_BAND_DICT['L8'],
+        # 'LANDSAT/LC08/C02/T2_TOA' : LANDSAT_BAND_DICT['L8'],
         'LANDSAT/LE07/C02/T1_TOA' : LANDSAT_BAND_DICT['L7'],
-        'LANDSAT/LE07/C02/T2_TOA' : LANDSAT_BAND_DICT['L7'],
+        # 'LANDSAT/LE07/C02/T2_TOA' : LANDSAT_BAND_DICT['L7'],
         'LANDSAT/LT05/C02/T1_TOA' : LANDSAT_BAND_DICT['L5'],
-        'LANDSAT/LT05/C02/T2_TOA' : LANDSAT_BAND_DICT['L5'],
+        # 'LANDSAT/LT05/C02/T2_TOA' : LANDSAT_BAND_DICT['L5'],
         'LANDSAT/LT04/C02/T1_TOA' : LANDSAT_BAND_DICT['L4'],
-        'LANDSAT/LT04/C02/T2_TOA' : LANDSAT_BAND_DICT['L4'],
+        # 'LANDSAT/LT04/C02/T2_TOA' : LANDSAT_BAND_DICT['L4'],
     }
 
 
