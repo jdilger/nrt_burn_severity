@@ -54,7 +54,8 @@ def main():
     today_string = datetime.utcnow().strftime("%Y-%m-%d").replace("-", "")
 
     # web service url of NIFC fires
-    url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Fire_History_Perimeters_Public/FeatureServer/0'
+    url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters/FeatureServer/0'
+    # url = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/Fire_History_Perimeters_Public/FeatureServer/0'
     extent, spatialref = parse_crs_extent(url)
 
     filename_prefix = 'nifc_fires_all'
@@ -90,27 +91,42 @@ def main():
 
     logger.info(f'Year Filter: {year_choice} | Acreage Minimum: {acre_min}')
     print('original length',len(gdf))
-    # subset columns by index position..
-    # had to look these up from the dataset since field names get changed upon read-in
-    # OBJECTID 0
-    # Incident Name 1
-    # GIS Acres 4
-    # Acres Auto-calculated 8
-    # Fire Discovery Date Time 32
-    # Global ID -5
-    # geometry -1
-    gdf = gdf.iloc[:,[0,1,4,8,32,-5,-1]]
-    # print(gdf.head(5))
-    # in case you want these fields from nifc later they are here:
-    # Containment Date Time 14
-    # Fire Out Date Time 34
-    # Initial Response Date Time 54
-
-    gdf = gdf.rename(columns={'poly_Incid': 'Name', 
+    # subset columns - had to look these up from the dataset since field names get changed upon read-in
+    # 
+    # OBJECTID: 'OBJECTID'
+    # Incident Name: 'poly_Incid'
+    # GIS Acres: 'poly_GISAc'
+    # Acres Auto-calculated: 'poly_Acres'
+    # Fire Discovery Date Time: 'attr_Fir_7'
+    # Fire Out Date Time: 'attr_FirO'
+    # Containment Date Time: 'attr_Conta'
+    # Initial Response Date Time: 'attr_Ini_3'
+    # Global ID: 'GlobalID'
+    # geometry: 'geometry'
+    gdf = gdf.loc[:,['OBJECTID',
+                     'poly_Incid',
+                     'poly_GISAc',
+                     'poly_Acres',
+                     'attr_Fir_7', 
+                    #  'attr_FireO', 
+                    #  'attr_Conta',
+                    #  'attr_Ini_3',
+                     'GlobalID',
+                     'geometry']]
+    # print(list(gdf.columns))
+    print(gdf.head(5))
+    gdf = gdf.rename(columns={
+                            'poly_Incid': 'Name', 
                             'poly_GISAc':'GISAcres', 
                             'poly_Acres': 'Acres', 
-                            'irwin_Fi_9':'Discovery'})
-
+                            'attr_Fir_7':'Discovery',
+                            # 'attr_FirO':'Out',
+                            # 'attr_Conta':'Containment',
+                            # 'attr_Ini_3': 'Response'
+                            })
+    # using Discovery field for now, 
+    # if you decide you want other datetime fields you'll need to convert them using below operation
+    
     # fillna for Discovery date field
     gdf.loc[:,'Discovery'] = gdf.loc[:,'Discovery'].fillna(value=0)
     # note: since i replaced NaN's with 0, those 0's will be converted to a datetime value of '1969-12-31 19:00:00' 
@@ -126,6 +142,7 @@ def main():
     end = pd.to_datetime(f'{year_choice}-12-31')
     gdf_yr = gdf[ (gdf.Discovery >= start) & (gdf.Discovery <= end ) ]
     gdf_yr.loc[:,'Discovery'] = gdf_yr.loc[:,'Discovery'].astype(str)
+    print(gdf_yr.head(5))
     
     # filter by acreage if provided
     if not acre_min == None:
