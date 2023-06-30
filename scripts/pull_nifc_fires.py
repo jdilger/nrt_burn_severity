@@ -49,7 +49,7 @@ def main():
     dir = args.outdir
     year_choice = args.year
     acre_min = args.acres
-
+    # TODO: we really don't need to let the user choose the outdir.. just hardcode it to find the repo parent directory.
     data_dir = os.path.join(dir, 'data', 'shp')
     today_string = datetime.utcnow().strftime("%Y-%m-%d").replace("-", "")
 
