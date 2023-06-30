@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 #     }
 #    }
 
+# NOTE: this is no longer used. All of the fire_info setting and getting is done Earth Engine server side so that 
+#   we are able to parallelize the BS mapping across 10s/100s/100000s of fire perimeters in one batch job.
 fire_dict = {
     "czu": {
         "region": [r"projects/pyregence-ee/assets/fires_bs_tool/czu_lightning_perim_20220815"],

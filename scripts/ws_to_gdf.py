@@ -6,7 +6,8 @@ from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 import urllib3
 import re
-
+"""This is a web-service to Geopandas GeoDataFrame module. 
+It is used in the pull_* CLI scripts to download data from a web feature service to a local shapefile"""
 warnings.simplefilter("ignore")
 
 def parse_crs_extent(url):

@@ -1,6 +1,10 @@
 import ee
 from datetime import datetime
 ee.Initialize()
+
+"""This module is only used for imageCollection prep, not compositing. See where its being called in BS_Mapper.ipynb..
+It is redundant with get_image_collection2.py and its functionality should get unified. """
+
 # burn severity mapping
 s2bandsin = ['B1','B2','B3','B4','B5','B6','B7','B8','B8A','B9','B10','B11','B12', 'QA60']
 s2bandsout = ['cb','blue','green','red','re1','re2','re3','nir','re4','waterVapor','cirrus','swir1','swir2', 'QA60']

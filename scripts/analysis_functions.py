@@ -1,9 +1,12 @@
 import ee
-import json
 import scripts.fire_info as fi
-import scripts.get_image_collections2 as gic2
+#TODO: gic was the original module for all things imageCollection handling.. 
+#   we transitioned to using something similar that Collect Earth Online uses because its cleaner code.. 
+#   we eventually would like there to be only one module related to imageCollection handling (filtering,merging,compositing)..
+#   original gic is still used for imageColl compositing
 import scripts.get_image_collections as gic
-
+#   gic2 is used for imageColl filtering/merging
+import scripts.get_image_collections2 as gic2
 
 def nbr(image:ee.Image)-> ee.Image:
     return image.normalizedDifference(['NIR','SWIR2']).multiply(1000)

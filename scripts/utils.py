@@ -1,3 +1,7 @@
+"""
+This module is mainly for exporting images in a variety of ways 
+"""
+
 # utils.py
 import ee
 

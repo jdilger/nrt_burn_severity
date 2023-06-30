@@ -1,3 +1,15 @@
+"""
+This is the superior get_image_collections module. It is one and the same with how Collect Earth online does 
+imageCollection prep (basically a copy-paste with some minor tweaks)
+
+This should get unified with get_image_collections.py.. basically anything we use get_image_collections.py for at the moment 
+should get migrated into this script so its all in one place.
+
+You'll also notice that this script is way unnecessarily feature-rich for this Burn Severity application! 
+(again, a copy-paste from CEO codebase). Feel free to remove functions that do not serve a purpose in this project..
+
+"""
+
 # GitHub URL: https://github.com/giswqs/qgis-earthengine-examples/tree/master/inputs.py
 
 from ctypes import Union
