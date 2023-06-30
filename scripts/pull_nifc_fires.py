@@ -114,7 +114,7 @@ def main():
                      'GlobalID',
                      'geometry']]
     # print(list(gdf.columns))
-    print(gdf.head(5))
+    # print(gdf.head(5))
     gdf = gdf.rename(columns={
                             'poly_Incid': 'Name', 
                             'poly_GISAc':'GISAcres', 
@@ -142,7 +142,7 @@ def main():
     end = pd.to_datetime(f'{year_choice}-12-31')
     gdf_yr = gdf[ (gdf.Discovery >= start) & (gdf.Discovery <= end ) ]
     gdf_yr.loc[:,'Discovery'] = gdf_yr.loc[:,'Discovery'].astype(str)
-    print(gdf_yr.head(5))
+    # print(gdf_yr.head(5))
     
     # filter by acreage if provided
     if not acre_min == None:
@@ -161,7 +161,7 @@ def main():
     conus = conus[~conus['STUSPS'].isin(not_conus)]
     gdf_final_conus=gpd.clip(gdf_final,conus)
     print('final conus records',len(gdf_final_conus))
-    print(gdf_final.sort_values(by='Acres').head(10))
+    # print(gdf_final.sort_values(by='Acres').head(10))
 
     
     # write to shp
